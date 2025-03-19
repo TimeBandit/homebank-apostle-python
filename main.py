@@ -1,78 +1,7 @@
 import csv
-from enum import Enum
-
-from src.display import display_rows_in_terminal
-
-
-class HomeBankPaymentType(Enum):
-    NONE = 0
-    CREDIT_CARD = 1
-    CHECK = 2
-    CASH = 3
-    BANK_TRANSFER = 4
-    INTERNAL_TRANSFER = 5
-    DEBIT_CARD = 6
-    STANDING_ORDER = 7
-    ELECTRONIC_PAYMENT = 8
-    DEPOSIT = 9
-    FINANCIAL_INSTITUTION_FEE = 10
-    DIRECT_DEBIT = 11
-
-
-class HomeBankHeaders(str, Enum):
-    DATE = "date"
-    PAYMENT = "payment"
-    INFO = "info"
-    PAYEE = "payee"
-    MEMO = "memo"
-    AMOUNT = "amount"
-    CATEGORY = "category"
-    TAGS = "tags"
-
-
-class StarlingHeaders(str, Enum):
-    DATE = "Date"
-    COUNTER_PARTY = "Counter Party"
-    REFERENCE = "Reference"
-    TYPE = "Type"
-    AMOUNT = "Amount (GBP)"
-    BALANCE = "Balance (GBP)"
-    CATEGORY = "Spending Category"
-    NOTES = "Notes"
-
-
-class StarlingPaymentType(Enum):
-    DEPOSIT_INTEREST = 'DEPOSIT INTEREST'
-    DIRECT_DEBIT = 'DIRECT DEBIT'
-    FASTER_PAYMENT = 'FASTER PAYMENT'
-    CICS_CHEQUE = 'CICS CHEQUE'
-
-
-STARLING_TO_HOMEBANK_MAP = {
-    StarlingPaymentType.DEPOSIT_INTEREST: HomeBankPaymentType.DEPOSIT,
-    StarlingPaymentType.DIRECT_DEBIT: HomeBankPaymentType.DIRECT_DEBIT,
-    StarlingPaymentType.FASTER_PAYMENT: HomeBankPaymentType.BANK_TRANSFER,
-    StarlingPaymentType.CICS_CHEQUE: HomeBankPaymentType.CHECK
-}
-
-
-def parse_payment_type(payment_type):
-    return STARLING_TO_HOMEBANK_MAP.get(StarlingPaymentType(payment_type), HomeBankPaymentType.NONE).value
-
-
-def parse_line(line):
-    result = {
-        HomeBankHeaders.DATE: line[StarlingHeaders.DATE],  # No .value needed
-        HomeBankHeaders.PAYMENT: parse_payment_type(line[StarlingHeaders.TYPE]),
-        HomeBankHeaders.INFO: "",
-        HomeBankHeaders.PAYEE: line[StarlingHeaders.COUNTER_PARTY],
-        HomeBankHeaders.MEMO: line[StarlingHeaders.REFERENCE],
-        HomeBankHeaders.AMOUNT: line[StarlingHeaders.AMOUNT],
-        HomeBankHeaders.CATEGORY: "",
-        HomeBankHeaders.TAGS: "",
-    }
-
-    return result
+from src.providers.starling import parse_line
+from src.utils.display import display_rows_in_terminal
+import argparse
 
 
 def read_starling_csv(input_file):
@@ -106,9 +35,38 @@ def write_homebank_csv(output_file, rows):
     display_rows_in_terminal(rows)
 
 
-def convert_starling_to_homebank(input_file, output_file):
+def convert_starling_to_homebank(input_file, should_write=False):
+    """Convert Starling CSV to HomeBank format"""
     parsed_rows = read_starling_csv(input_file)
-    write_homebank_csv(output_file, parsed_rows)
+
+    # Always display in terminal
+    display_rows_in_terminal(parsed_rows)
+
+    # Write to file only if requested
+    if should_write:
+        # Generate output filename based on input filename
+        output_file = input_file.rsplit('.', 1)[0] + '_converted.csv'
+        write_homebank_csv(output_file, parsed_rows)
+        print(f"\nFile written to: {output_file}")
 
 
-convert_starling_to_homebank('before.csv', 'after.csv')
+def main():
+    parser = argparse.ArgumentParser(
+        description='Convert Starling Bank CSV to HomeBank format'
+    )
+    parser.add_argument(
+        'input_file',
+        help='The Starling Bank CSV file to convert'
+    )
+    parser.add_argument(
+        '--write',
+        action='store_true',
+        help='Write the output to a CSV file (default: only display in terminal)'
+    )
+
+    args = parser.parse_args()
+    convert_starling_to_homebank(args.input_file, args.write)
+
+
+if __name__ == "__main__":
+    main()
