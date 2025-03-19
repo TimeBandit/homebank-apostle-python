@@ -14,7 +14,6 @@ def read_starling_csv(input_file):
                 key.value: value for key,
                 value in parse_line(row).items()
             }
-            print(parsed_data)
             parsed_rows.append(parsed_data)
     return parsed_rows
 

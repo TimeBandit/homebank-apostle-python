@@ -16,6 +16,7 @@ class StarlingHeaders(str, Enum):
 class StarlingPaymentType(Enum):
     DEPOSIT_INTEREST = 'DEPOSIT INTEREST'
     DIRECT_DEBIT = 'DIRECT DEBIT'
+    DIRECT_CREDIT = "DIRECT CREDIT"
     FASTER_PAYMENT = 'FASTER PAYMENT'
     CICS_CHEQUE = 'CICS CHEQUE'
 
@@ -24,7 +25,8 @@ STARLING_TO_HOMEBANK_MAP = {
     StarlingPaymentType.DEPOSIT_INTEREST: HomeBankPaymentType.DEPOSIT,
     StarlingPaymentType.DIRECT_DEBIT: HomeBankPaymentType.DIRECT_DEBIT,
     StarlingPaymentType.FASTER_PAYMENT: HomeBankPaymentType.BANK_TRANSFER,
-    StarlingPaymentType.CICS_CHEQUE: HomeBankPaymentType.CHECK
+    StarlingPaymentType.CICS_CHEQUE: HomeBankPaymentType.CHECK,
+    StarlingPaymentType.DIRECT_CREDIT: HomeBankPaymentType.ELECTRONIC_PAYMENT
 }
 
 
