@@ -1,6 +1,8 @@
 import csv
 from enum import Enum
 
+from src.display import display_rows_in_terminal
+
 
 class HomeBankPaymentType(Enum):
     NONE = 0
@@ -17,36 +19,26 @@ class HomeBankPaymentType(Enum):
     DIRECT_DEBIT = 11
 
 
-StarlingToHomeBankMap = dict({
-    'Date': 'date',
-    'Counter Party': 'payee',
-    'Reference': 'memo',
-    'Amount (GBP)': 'amount'
-})
+class HomeBankHeaders(str, Enum):
+    DATE = "date"
+    PAYMENT = "payment"
+    INFO = "info"
+    PAYEE = "payee"
+    MEMO = "memo"
+    AMOUNT = "amount"
+    CATEGORY = "category"
+    TAGS = "tags"
 
 
-class StarlingHeaders(Enum):
-    DATE = 'Date'
-    COUNTER_PARTY = 'Counter Party'
-    REFERENCE = 'Reference	Type'
-    TYPE = 'Type'
-    AMOUNT = 'Amount (GBP)'
-    BALANCE = 'Balance (GBP)'
-    CATEGORY = 'Spending Category'
-    NOTES = 'Notes'
-
-# HomeBankHeaders = ('date',	'payment',	'info',	'payee',	'memo',	'amount',	'category',	'tags')
-
-
-class HomeBankHeaders(Enum):
-    DATE = 'date'
-    PAYMENT = 'payment'
-    INFO = 'info'
-    PAYEE = 'payee'
-    MEMO = 'memo'
-    AMOUNT = 'amount'
-    CATEGORY = 'category'
-    TAGS = 'tags'
+class StarlingHeaders(str, Enum):
+    DATE = "Date"
+    COUNTER_PARTY = "Counter Party"
+    REFERENCE = "Reference"
+    TYPE = "Type"
+    AMOUNT = "Amount (GBP)"
+    BALANCE = "Balance (GBP)"
+    CATEGORY = "Spending Category"
+    NOTES = "Notes"
 
 
 class StarlingPaymentType(Enum):
@@ -56,23 +48,21 @@ class StarlingPaymentType(Enum):
     CICS_CHEQUE = 'CICS CHEQUE'
 
 
-def parse_payment_type(type):
-    match type:
-        case StarlingPaymentType.DEPOSIT_INTEREST:
-            return HomeBankPaymentType.DEPOSIT
-        case StarlingPaymentType.DIRECT_DEBIT:
-            return HomeBankPaymentType.DIRECT_DEBIT
-        case StarlingPaymentType.FASTER_PAYMENT:
-            return HomeBankPaymentType.BANK_TRANSFER
-        case StarlingPaymentType.CICS_CHEQUE:
-            return HomeBankPaymentType.CHECK
-        case _:
-            raise ValueError()
+STARLING_TO_HOMEBANK_MAP = {
+    StarlingPaymentType.DEPOSIT_INTEREST: HomeBankPaymentType.DEPOSIT,
+    StarlingPaymentType.DIRECT_DEBIT: HomeBankPaymentType.DIRECT_DEBIT,
+    StarlingPaymentType.FASTER_PAYMENT: HomeBankPaymentType.BANK_TRANSFER,
+    StarlingPaymentType.CICS_CHEQUE: HomeBankPaymentType.CHECK
+}
+
+
+def parse_payment_type(payment_type):
+    return STARLING_TO_HOMEBANK_MAP.get(StarlingPaymentType(payment_type), HomeBankPaymentType.NONE).value
 
 
 def parse_line(line):
-    result = dict({
-        HomeBankHeaders.DATE: line[StarlingHeaders.DATE],
+    result = {
+        HomeBankHeaders.DATE: line[StarlingHeaders.DATE],  # No .value needed
         HomeBankHeaders.PAYMENT: parse_payment_type(line[StarlingHeaders.TYPE]),
         HomeBankHeaders.INFO: "",
         HomeBankHeaders.PAYEE: line[StarlingHeaders.COUNTER_PARTY],
@@ -80,14 +70,45 @@ def parse_line(line):
         HomeBankHeaders.AMOUNT: line[StarlingHeaders.AMOUNT],
         HomeBankHeaders.CATEGORY: "",
         HomeBankHeaders.TAGS: "",
-    })
+    }
+
     return result
 
 
-with open('before.csv', newline='') as csvfile:
-    reader = csv.reader(csvfile, delimiter=',')
-    dicReader = csv.DictReader(csvfile)
+def read_starling_csv(input_file):
+    """Read the Starling CSV file and return a list of parsed rows"""
+    parsed_rows = []
+    with open(input_file, newline='') as csvfile:
+        dicReader = csv.DictReader(csvfile)
+        for row in dicReader:
+            parsed_data = {
+                key.value: value for key,
+                value in parse_line(row).items()
+            }
+            print(parsed_data)
+            parsed_rows.append(parsed_data)
+    return parsed_rows
 
-    for row in dicReader:
-        parse = parse_line(row)
-        print(parse)
+
+def write_homebank_csv(output_file, rows):
+    """Write the parsed rows to a new HomeBank CSV file"""
+    if not rows:
+        return
+
+    fieldnames = list(rows[0].keys())  # Get headers from first row
+
+    with open(output_file, 'w', newline='') as csvfile:
+        dict_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        dict_writer.writeheader()
+        dict_writer.writerows(rows)
+
+    # Display in terminal
+    display_rows_in_terminal(rows)
+
+
+def convert_starling_to_homebank(input_file, output_file):
+    parsed_rows = read_starling_csv(input_file)
+    write_homebank_csv(output_file, parsed_rows)
+
+
+convert_starling_to_homebank('before.csv', 'after.csv')
