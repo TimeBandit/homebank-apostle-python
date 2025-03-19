@@ -1,2 +1,5 @@
 __pycache__/
 .venv/
+hba_python.egg-info
+homebank_apostle.egg-info
+homebank_apostle_python.egg-info
