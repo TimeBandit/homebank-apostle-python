@@ -14,10 +14,14 @@ options:
 To run this from terminal folder first run once ` pip install -e .` from the
 project root
 
-## Running
+## Uasge
 
 ```bash
 hba-python [-h] [--write] input_file
 ```
 
 By default it will out the converted data to a table in the terminal.
+
+## Testing
+
+Run `pytest`

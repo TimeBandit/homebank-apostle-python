@@ -3,3 +3,4 @@ __pycache__/
 hba_python.egg-info
 homebank_apostle.egg-info
 homebank_apostle_python.egg-info
+*.csv
