@@ -25,6 +25,10 @@ def display_rows_in_terminal(rows):
             payee = colored(row['payee'], 'cyan')
         elif payment_type == '4':  # Rent
             payee = colored(row['payee'], 'yellow')
+        elif payment_type == '11':  # Rent
+            payee = colored(row['payee'], 'green')
+        elif payment_type == '2':  # Rent
+            payee = colored(row['payee'], 'blue')
         else:
             payee = row['payee']
 

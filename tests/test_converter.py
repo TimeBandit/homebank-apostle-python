@@ -8,30 +8,53 @@ import csv
 import tempfile
 import os
 
+sample_data = [
+    {
+        'Date': '01/01/2024',
+        'Counter Party': 'Starling Bank',
+        'Reference': 'December Interest Earned',
+        'Type': 'DEPOSIT INTEREST',
+        'Amount (GBP)': '13.58',
+        'Balance (GBP)': '8620.01',
+        'Spending Category': 'INCOME',
+        'Notes': ''
+    },
+    {
+        'Date': '02/01/2024',
+        'Counter Party': 'Affinity Water',
+        'Reference': '44060495',
+        'Type': 'DIRECT DEBIT',
+        'Amount (GBP)': '-44.00',
+        'Balance (GBP)': '8576.01',
+        'Spending Category': 'GENERAL',
+        'Notes': ''
+    },
+    {
+        'Date': '25/01/2024',
+        'Counter Party': 'BABATA S',
+        'Reference': 'Rent January',
+        'Type': 'FASTER PAYMENT',
+        'Amount (GBP)': '350.00',
+        'Balance (GBP)': '8715.50',
+        'Spending Category': 'INCOME',
+        'Notes': ''
+    },
+    {
+        'Date': '14/11/2024',
+        'Counter Party': 'Cheque',
+        'Reference': 'Cheque',
+        'Type': 'CICS CHEQUE',
+        'Amount (GBP)': '1597.56',
+        'Balance (GBP)': '12183.58',
+        'Spending Category': 'INCOME',
+        'Notes': ''
+    }
+]
+
 
 @pytest.fixture
 def sample_csv_data():
     """Create a temporary CSV file with sample data"""
-    sample_data = [
-        {
-            'Date': '01/01/2024',
-            'Counter Party': 'TESCO',
-            'Reference': 'Groceries',
-            'Type': 'CARD_PAYMENT',
-            'Amount (GBP)': '-50.00',
-            'Balance (GBP)': '1000.00',
-            'Spending Category': 'SHOPPING'
-        },
-        {
-            'Date': '02/01/2024',
-            'Counter Party': 'SALARY',
-            'Reference': 'January Salary',
-            'Type': 'DEPOSIT',
-            'Amount (GBP)': '2000.00',
-            'Balance (GBP)': '3000.00',
-            'Spending Category': 'INCOME'
-        }
-    ]
 
     with tempfile.NamedTemporaryFile(mode='w', delete=False, newline='') as temp_file:
         writer = csv.DictWriter(temp_file, fieldnames=sample_data[0].keys())
@@ -47,15 +70,26 @@ def test_read_starling_csv(sample_csv_data):
     """Test reading and parsing Starling CSV file"""
     parsed_rows = read_starling_csv(sample_csv_data)
 
-    assert len(parsed_rows) == 2
+    assert len(parsed_rows) == 4
     assert parsed_rows[0]['date'] == '01/01/2024'
-    assert parsed_rows[0]['payee'] == 'TESCO'
-    assert parsed_rows[0]['memo'] == 'Groceries'
-    assert parsed_rows[0]['amount'] == '-50.00'
+    assert parsed_rows[0]['payee'] == 'Starling Bank'
+    assert parsed_rows[0]['memo'] == 'December Interest Earned'
+    assert parsed_rows[0]['amount'] == '13.58'
 
     assert parsed_rows[1]['date'] == '02/01/2024'
-    assert parsed_rows[1]['payee'] == 'SALARY'
-    assert parsed_rows[1]['amount'] == '2000.00'
+    assert parsed_rows[1]['payee'] == 'Affinity Water'
+    assert parsed_rows[1]['memo'] == '44060495'
+    assert parsed_rows[1]['amount'] == '-44.00'
+
+    assert parsed_rows[2]['date'] == '25/01/2024'
+    assert parsed_rows[2]['payee'] == 'BABATA S'
+    assert parsed_rows[2]['memo'] == 'Rent January'
+    assert parsed_rows[2]['amount'] == '350.00'
+
+    assert parsed_rows[3]['date'] == '14/11/2024'
+    assert parsed_rows[3]['payee'] == 'Cheque'
+    assert parsed_rows[3]['memo'] == 'Cheque'
+    assert parsed_rows[3]['amount'] == '1597.56'
 
 
 def test_write_homebank_csv(sample_csv_data):
@@ -70,32 +104,45 @@ def test_write_homebank_csv(sample_csv_data):
             reader = csv.DictReader(csvfile)
             written_rows = list(reader)
 
-            assert len(written_rows) == 2
+            assert len(written_rows) == 4
             assert written_rows[0]['date'] == '01/01/2024'
-            assert written_rows[0]['payee'] == 'TESCO'
-            assert written_rows[0]['amount'] == '-50.00'
+            assert written_rows[0]['payee'] == 'Starling Bank'
+            assert parsed_rows[0]['memo'] == 'December Interest Earned'
+            assert written_rows[0]['amount'] == '13.58'
 
     os.unlink(temp_output.name)
 
 
 def test_parse_line():
     """Test parsing individual lines"""
-    input_row = {
-        'Date': '01/01/2024',
-        'Counter Party': 'TESCO',
-        'Reference': 'Groceries',
-        'Type': 'CARD_PAYMENT',
-        'Amount (GBP)': '-50.00',
-        'Balance (GBP)': '1000.00',
-        'Spending Category': 'SHOPPING'
-    }
 
-    parsed_data = parse_line(input_row)
-
+    parsed_data = parse_line(sample_data[0])
     assert parsed_data['date'] == '01/01/2024'
-    assert parsed_data['payee'] == 'TESCO'
-    assert parsed_data['memo'] == 'Groceries'
-    assert parsed_data['amount'] == '-50.00'
+    assert parsed_data['payment'] == 9
+    assert parsed_data['payee'] == 'Starling Bank'
+    assert parsed_data['memo'] == 'December Interest Earned'
+    assert parsed_data['amount'] == '13.58'
+
+    parsed_data = parse_line(sample_data[1])
+    assert parsed_data['date'] == '02/01/2024'
+    assert parsed_data['payment'] == 11
+    assert parsed_data['payee'] == 'Affinity Water'
+    assert parsed_data['memo'] == '44060495'
+    assert parsed_data['amount'] == '-44.00'
+
+    parsed_data = parse_line(sample_data[2])
+    assert parsed_data['date'] == '25/01/2024'
+    assert parsed_data['payment'] == 4
+    assert parsed_data['payee'] == 'BABATA S'
+    assert parsed_data['memo'] == 'Rent January'
+    assert parsed_data['amount'] == '350.00'
+
+    parsed_data = parse_line(sample_data[3])
+    assert parsed_data['date'] == '14/11/2024'
+    assert parsed_data['payment'] == 2
+    assert parsed_data['payee'] == 'Cheque'
+    assert parsed_data['memo'] == 'Cheque'
+    assert parsed_data['amount'] == '1597.56'
 
 
 def test_invalid_csv_format():
