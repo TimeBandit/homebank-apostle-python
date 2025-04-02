@@ -19,6 +19,7 @@ class StarlingPaymentType(Enum):
     DIRECT_CREDIT = "DIRECT CREDIT"
     FASTER_PAYMENT = 'FASTER PAYMENT'
     CICS_CHEQUE = 'CICS CHEQUE'
+    CONTACTLESS = 'CONTACTLESS'
 
 
 STARLING_TO_HOMEBANK_MAP = {
@@ -26,7 +27,8 @@ STARLING_TO_HOMEBANK_MAP = {
     StarlingPaymentType.DIRECT_DEBIT: HomeBankPaymentType.DIRECT_DEBIT,
     StarlingPaymentType.FASTER_PAYMENT: HomeBankPaymentType.BANK_TRANSFER,
     StarlingPaymentType.CICS_CHEQUE: HomeBankPaymentType.CHECK,
-    StarlingPaymentType.DIRECT_CREDIT: HomeBankPaymentType.ELECTRONIC_PAYMENT
+    StarlingPaymentType.DIRECT_CREDIT: HomeBankPaymentType.ELECTRONIC_PAYMENT,
+    StarlingPaymentType.CONTACTLESS: HomeBankPaymentType.DEBIT_CARD
 }
 
 
